@@ -1,0 +1,23 @@
+[project]
+name = "rag-it"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "docx>=0.2.4",
+    "pypdf2>=3.0.1",
+]
+
+[tool.black]
+line-length = 79
+target-version = ["py313"]
+include = '\.pyi?$'
+exclude = '''
+/(
+    \.venv
+  | build
+  | dist
+)/
+'''
+
