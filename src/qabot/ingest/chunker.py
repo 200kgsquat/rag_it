@@ -1,34 +1,41 @@
 import re
-from typing import List, Dict
-from sentence_transformers import SentenceTransformer
+import tiktoken
+from typing import List, Dict, Tuple
 
 
 class Chunker:
     def __init__(
         self,
-        tokenizer_model_name: str = "sentence-transformers/all-MiniLM-L6-v2",
         min_tokens: int = 150,
-        max_tokens: int = 250,
+        max_tokens: int = 240,
         overlap_pct: float = 0.15,
+        min_chunk_length: int = 15,
     ):
-        self.tokenizer = SentenceTransformer(tokenizer_model_name).tokenizer
+        self.tokenizer = tiktoken.get_encoding("cl100k_base")
         self.min_tokens = min_tokens
         self.max_tokens = max_tokens
         self.overlap_pct = overlap_pct
+        self.min_chunk_length = min_chunk_length
 
     def chunk_document(self, document: Dict) -> List[Dict]:
-        sections = self._split_by_headings(document["text"])
+        text = document.get("text", "").strip()
+        if not text:
+            return []
 
-        chunks = []
+        text = re.sub(r"[^\x20-\x7E\n\r\t]", " ", text)
+        text = re.sub(r"\s+", " ", text).strip()
+
+        sections = self._split_by_headings(text)
+        chunks: List[Dict] = []
+
         for section_id, (heading, content) in enumerate(sections):
-            section_chunks = self._split_by_tokens(
-                content, document, section_id, heading
+            chunks.extend(
+                self._split_by_tokens(content, document, section_id, heading)
             )
-            chunks.extend(section_chunks)
 
-        return chunks
+        return [c for c in chunks if c]
 
-    def _split_by_headings(self, text: str) -> List[tuple]:
+    def _split_by_headings(self, text: str) -> List[Tuple[str, str]]:
         pattern = r"(#{1,3})\s+(.*)"
         matches = list(re.finditer(pattern, text))
         if not matches:
@@ -44,37 +51,52 @@ class Chunker:
         return sections
 
     def _split_by_tokens(
-        self, text: str, document: Dict, section_id: int, section_title: str
+        self,
+        text: str,
+        document: Dict,
+        section_id: int,
+        section_title: str,
     ) -> List[Dict]:
+        if not text.strip():
+            return []
+
         tokens = self.tokenizer.encode(text)
-        total_tokens = len(tokens)
-        if total_tokens <= self.max_tokens:
+        n = len(tokens)
+
+        if n <= self.max_tokens:
             return [
                 self._create_chunk(
-                    text, document, section_id, 0, section_title, total_tokens
+                    text, document, section_id, 0, section_title, n
                 )
             ]
 
-        chunks = []
+        chunks: List[Dict] = []
         start_idx = 0
         sub_section_id = 0
-        while start_idx < total_tokens:
-            end_idx = min(start_idx + self.max_tokens, total_tokens)
+        overlap = int(self.max_tokens * self.overlap_pct)
+
+        while start_idx < n:
+            end_idx = min(start_idx + self.max_tokens, n)
             chunk_tokens = tokens[start_idx:end_idx]
-            chunk_text = self.tokenizer.decode(chunk_tokens)
-            chunks.append(
-                self._create_chunk(
-                    chunk_text,
-                    document,
-                    section_id,
-                    sub_section_id,
-                    section_title,
-                    len(chunk_tokens),
-                )
-            )
-            overlap = int(len(chunk_tokens) * self.overlap_pct)
-            start_idx = end_idx - overlap
-            sub_section_id += 1
+            chunk_text = self.tokenizer.decode(chunk_tokens).strip()
+
+            if len(chunk_text) >= self.min_chunk_length:
+                token_count = len(chunk_tokens)
+                if token_count >= self.min_tokens:
+                    chunks.append(
+                        self._create_chunk(
+                            chunk_text,
+                            document,
+                            section_id,
+                            sub_section_id,
+                            section_title,
+                            token_count,
+                        )
+                    )
+                    sub_section_id += 1
+
+            start_idx = end_idx - overlap if end_idx < n else n
+
         return chunks
 
     def _create_chunk(
@@ -86,7 +108,7 @@ class Chunker:
         section_title: str,
         token_count: int,
     ) -> Dict:
-        doc_title_slug = document["title"].replace(" ", "-").lower()
+        doc_title_slug = document.get("title", "doc").replace(" ", "-").lower()
         chunk_id = f"{doc_title_slug}_{section_id}_{sub_section_id}"
         return {
             "id": chunk_id,
@@ -95,8 +117,8 @@ class Chunker:
                 "section_id": str(section_id),
                 "sub_section_id": str(sub_section_id),
                 "section_title": section_title,
-                "document_title": document["title"],
-                "path": document["path"],
+                "document_title": document.get("title", ""),
+                "path": document.get("path", ""),
                 "tokens": token_count,
             },
         }
