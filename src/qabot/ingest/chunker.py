@@ -1,6 +1,20 @@
 import re
 import tiktoken
-from typing import List, Dict, Tuple
+from typing import List, Tuple, Optional
+from pydantic import BaseModel
+
+
+class DocumentData(BaseModel):
+    title: str
+    path: str
+    text: str
+
+
+class Chunk(BaseModel):
+    id: str
+    text: str
+    meta: dict
+    document: Optional[DocumentData] = None
 
 
 class Chunker:
@@ -17,8 +31,8 @@ class Chunker:
         self.overlap_pct = overlap_pct
         self.min_chunk_length = min_chunk_length
 
-    def chunk_document(self, document: Dict) -> List[Dict]:
-        text = document.get("text", "").strip()
+    def chunk_document(self, document: DocumentData) -> List[Chunk]:
+        text = document.text.strip()
         if not text:
             return []
 
@@ -26,7 +40,7 @@ class Chunker:
         text = re.sub(r"\s+", " ", text).strip()
 
         sections = self._split_by_headings(text)
-        chunks: List[Dict] = []
+        chunks: List[Chunk] = []
 
         for section_id, (heading, content) in enumerate(sections):
             chunks.extend(
@@ -53,10 +67,10 @@ class Chunker:
     def _split_by_tokens(
         self,
         text: str,
-        document: Dict,
+        document: DocumentData,
         section_id: int,
         section_title: str,
-    ) -> List[Dict]:
+    ) -> List[Chunk]:
         if not text.strip():
             return []
 
@@ -70,7 +84,7 @@ class Chunker:
                 )
             ]
 
-        chunks: List[Dict] = []
+        chunks: List[Chunk] = []
         start_idx = 0
         sub_section_id = 0
         overlap = int(self.max_tokens * self.overlap_pct)
@@ -102,23 +116,24 @@ class Chunker:
     def _create_chunk(
         self,
         text: str,
-        document: Dict,
+        document: DocumentData,
         section_id: int,
         sub_section_id: int,
         section_title: str,
         token_count: int,
-    ) -> Dict:
-        doc_title_slug = document.get("title", "doc").replace(" ", "-").lower()
+    ) -> Chunk:
+        doc_title_slug = document.title.replace(" ", "-").lower()
         chunk_id = f"{doc_title_slug}_{section_id}_{sub_section_id}"
-        return {
-            "id": chunk_id,
-            "text": text,
-            "meta": {
+        return Chunk(
+            id=chunk_id,
+            text=text,
+            meta={
                 "section_id": str(section_id),
                 "sub_section_id": str(sub_section_id),
                 "section_title": section_title,
-                "document_title": document.get("title", ""),
-                "path": document.get("path", ""),
+                "document_title": document.title,
+                "path": document.path,
                 "tokens": token_count,
             },
-        }
+            document=document,
+        )
