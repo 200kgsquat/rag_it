@@ -12,3 +12,6 @@ run_chunker:
 
 test_chuncker:
 	uv run pytest -v tests/test_chunker.py
+
+run_indexer:
+	uv run -m scripts.run_indexer
