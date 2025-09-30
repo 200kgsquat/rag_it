@@ -1,19 +1,18 @@
-from pathlib import Path
 import json
 from src.qabot.indexer import Indexer
-
-CHUNKS_FILE = Path("data") / "chunks" / "chunks_updated.json"
+import config
 
 
 def main():
-    if not CHUNKS_FILE.exists():
-        raise FileNotFoundError(f"Chunks file not found: {CHUNKS_FILE}")
+    if not config.CHUNKS_FILE.exists():
+        raise FileNotFoundError(f"Chunks file not found: {config.CHUNKS_FILE}")
 
-    with CHUNKS_FILE.open("r", encoding="utf-8") as f:
+    with config.CHUNKS_FILE.open("r", encoding="utf-8") as f:
         chunks = json.load(f)
 
-    indexer = Indexer()
-    print("Building FAISS index...")
+    print(f"Loaded {len(chunks)} chunks from {config.CHUNKS_FILE}")
+
+    indexer = Indexer(model_name=config.EMBEDDING_MODEL)
     indexer.build_index(chunks)
 
     query = "How to reset VPN password?"

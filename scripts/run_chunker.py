@@ -3,40 +3,36 @@ from src.qabot.ingest.chunker import Chunker
 from tqdm import tqdm
 import json
 import os
-
-INPUT_FOLDER = "data/it-knowledge/canonical"
-OUTPUT_FILE = "data/chunks/chunks_updated.json"
+import config
 
 
 def main():
-    os.makedirs(os.path.dirname(OUTPUT_FILE), exist_ok=True)
+    os.makedirs(os.path.dirname(config.CHUNKS_FILE), exist_ok=True)
 
     loader = DocumentLoader()
-    documents = loader.load_directory(INPUT_FOLDER)
+    documents = loader.load_directory(str(config.INPUT_DIR))
     print(f"Loaded {len(documents)} documents")
 
-    chunker = Chunker(
-        min_tokens=150,
-        max_tokens=250,
-        overlap_pct=0.15,
-        min_chunk_length=15,
-    )
+    chunker = Chunker(**config.CHUNKER_CONFIG)
 
     all_chunks = []
     for doc in tqdm(documents, desc="Chunking documents", unit="doc"):
         try:
             if doc.text.strip():
-                chunks = chunker.chunk_document(
-                    {"title": doc.title, "path": doc.path, "text": doc.text}
-                )
+                chunks = chunker.chunk_document(doc)
                 all_chunks.extend(chunks)
         except Exception as e:
             print(f"[ERROR] Failed to process document '{doc.title}': {e}")
 
-    with open(OUTPUT_FILE, "w", encoding="utf-8") as f:
-        json.dump(all_chunks, f, ensure_ascii=False, indent=2)
+    with open(config.CHUNKS_FILE, "w", encoding="utf-8") as f:
+        json.dump(
+            [chunk.model_dump() for chunk in all_chunks],
+            f,
+            ensure_ascii=False,
+            indent=2
+        )
 
-    print(f"Chunks saved to {OUTPUT_FILE}")
+    print(f"Chunks saved to {config.CHUNKS_FILE}")
 
 
 if __name__ == "__main__":

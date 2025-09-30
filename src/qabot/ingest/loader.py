@@ -1,18 +1,10 @@
 from docx import Document as DocxDocument
-from pydantic import BaseModel
 from typing import List
 from datetime import datetime
 from pathlib import Path
+from .models import DocumentData
 import PyPDF2
 import re
-
-
-class DocumentData(BaseModel):
-    title: str
-    path: str
-    filetype: str
-    updated_at: str
-    text: str
 
 
 class DocumentLoader:

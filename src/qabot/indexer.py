@@ -1,25 +1,20 @@
-from pathlib import Path
 import pickle
 import faiss
 from sentence_transformers import SentenceTransformer
-
-INDEX_DIR = Path(".index")
-INDEX_FILE = INDEX_DIR / "index.faiss"
-CHUNKS_FILE = INDEX_DIR / "chunks_updated.pkl"
+import config
 
 
 class Indexer:
-    def __init__(
-        self, model_name: str = "sentence-transformers/all-MiniLM-L6-v2"
-    ):
+    def __init__(self, model_name: str = None):
+        if model_name is None:
+            model_name = config.EMBEDDING_MODEL
         self.model = SentenceTransformer(model_name)
         self.index: faiss.IndexFlatIP = None
         self.chunks = []
 
     def build_index(self, chunks: list):
-        INDEX_DIR.mkdir(parents=True, exist_ok=True)
+        config.INDEX_DIR.mkdir(parents=True, exist_ok=True)
         self.chunks = chunks
-
         texts = [chunk["text"] for chunk in chunks]
         embeddings = self.model.encode(texts, convert_to_numpy=True)
         faiss.normalize_L2(embeddings)
@@ -27,12 +22,18 @@ class Indexer:
         dim = embeddings.shape[1]
         self.index = faiss.IndexFlatIP(dim)
         self.index.add(embeddings)
-
-        faiss.write_index(self.index, str(INDEX_FILE))
-        with CHUNKS_FILE.open("wb") as f:
+        faiss.write_index(self.index, str(config.INDEX_FILE))
+        with config.INDEX_CHUNKS.open("wb") as f:
             pickle.dump(chunks, f)
 
         print(f"Index built: {self.index.ntotal} vectors")
+
+    def load(self):
+        """Load a previously saved FAISS index and chunks from disk."""
+        self.index = faiss.read_index(str(config.INDEX_FILE))
+        with open(config.INDEX_CHUNKS, "rb") as f:
+            self.chunks = pickle.load(f)
+        print(f"Index loaded: {self.index.ntotal} vectors")
 
     def query(self, query_text: str, k: int = 5):
         if self.index is None:

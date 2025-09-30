@@ -1,20 +1,7 @@
 import re
 import tiktoken
-from typing import List, Tuple, Optional
-from pydantic import BaseModel
-
-
-class DocumentData(BaseModel):
-    title: str
-    path: str
-    text: str
-
-
-class Chunk(BaseModel):
-    id: str
-    text: str
-    meta: dict
-    document: Optional[DocumentData] = None
+from typing import List, Tuple
+from .models import DocumentData, Chunk
 
 
 class Chunker:
