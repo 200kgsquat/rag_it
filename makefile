@@ -15,3 +15,9 @@ test_chuncker:
 
 run_indexer:
 	uv run -m scripts.run_indexer
+
+run_rag:
+	uv run python -m scripts.run_rag
+
+run_llm:
+	uv run python -m scripts.run_llm "$(Q)"

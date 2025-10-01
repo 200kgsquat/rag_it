@@ -1,7 +1,7 @@
 from src.qabot.ingest.loader import DocumentLoader
 import re
 import os
-import config
+from config import config
 
 
 def clean_text(text):
@@ -14,11 +14,11 @@ def clean_text(text):
 
 def main():
     loader = DocumentLoader()
-    results = loader.load_directory(str(config.INPUT_DIR))
+    results = loader.load_directory(str(config.input_dir))
     print(f"Found documents: {len(results)}")
 
-    os.makedirs(config.OUTPUT_FILE.parent, exist_ok=True)
-    with open(config.OUTPUT_FILE, "w", encoding="utf-8") as f:
+    os.makedirs(config.output_file.parent, exist_ok=True)
+    with open(config.output_file, "w", encoding="utf-8") as f:
         for doc in results:
             cleaned_text = clean_text(doc.text)
             f.write(f"=== {doc.title} ===\n")
@@ -29,7 +29,7 @@ def main():
             f.write("-" * 50 + "\n")
             f.write(cleaned_text + "\n\n")
 
-    print(f"Results saved to {config.OUTPUT_FILE}")
+    print(f"Results saved to {config.output_file}")
 
 
 if __name__ == "__main__":

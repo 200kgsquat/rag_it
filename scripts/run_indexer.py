@@ -1,18 +1,18 @@
 import json
 from src.qabot.indexer import Indexer
-import config
+from config import config
 
 
 def main():
-    if not config.CHUNKS_FILE.exists():
-        raise FileNotFoundError(f"Chunks file not found: {config.CHUNKS_FILE}")
+    if not config.chunks_file.exists():
+        raise FileNotFoundError(f"Chunks file not found: {config.chunks_file}")
 
-    with config.CHUNKS_FILE.open("r", encoding="utf-8") as f:
+    with config.chunks_file.open("r", encoding="utf-8") as f:
         chunks = json.load(f)
 
-    print(f"Loaded {len(chunks)} chunks from {config.CHUNKS_FILE}")
+    print(f"Loaded {len(chunks)} chunks from {config.chunks_file}")
 
-    indexer = Indexer(model_name=config.EMBEDDING_MODEL)
+    indexer = Indexer(model_name=config.embedding_model)
     indexer.build_index(chunks)
 
     query = "How to reset VPN password?"
@@ -23,7 +23,8 @@ def main():
         print(
             f"{i}. Score: {res['score']:.4f}, "
             f"Text: {res['text'][:150]}..., "
-            f"Meta: {res['meta']}"
+            f"Meta: {res['meta']}, "
+            f"Chunk ID: {res['chunk_id']}"
         )
 
 

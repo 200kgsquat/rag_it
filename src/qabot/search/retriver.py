@@ -11,7 +11,7 @@ class Retriever:
         self.index = index
         self.chunks = chunks
 
-    def retrieve(self, question: str, top_k: int = 8) -> List[Dict]:
+    def retrieve(self, question: str, top_k: int = 3) -> List[Dict]:
         if not question.strip():
             return []
 
@@ -27,6 +27,7 @@ class Retriever:
                 chunk = self.chunks[idx]
                 results.append(
                     {
+                        "chunk_id": idx,
                         "score": float(score),
                         "text": chunk["text"],
                         "meta": chunk.get("meta", {}),
