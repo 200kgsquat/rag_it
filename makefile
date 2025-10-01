@@ -12,3 +12,12 @@ run_chunker:
 
 test_chuncker:
 	uv run pytest -v tests/test_chunker.py
+
+run_indexer:
+	uv run -m scripts.run_indexer
+
+run_rag:
+	uv run python -m scripts.run_rag
+
+run_llm:
+	uv run python -m scripts.run_llm "$(Q)"
