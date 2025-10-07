@@ -20,7 +20,7 @@ class LLM:
                 modelId=self.model_id, messages=messages, system=system
             )
 
-            return response["ouput"]["message"]["content"][0]["text"]
+            return response["output"]["message"]["content"][0]["text"]
         except Exception as e:
             print(f"Error conversing model: {e}")
             raise

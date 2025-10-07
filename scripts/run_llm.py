@@ -1,5 +1,5 @@
 import sys
-from src.qabot.llm.getway import LLM
+from src.qabot.llm.gateway import LLM
 
 if len(sys.argv) < 2:
     print("Usage: python scripts/run_llm.py 'Your question here'")
@@ -11,14 +11,7 @@ llm = LLM(
     region="eu-north-1",
 )
 
-messages = [
-    {
-        "role": "user",
-        "content": [
-            {"text": question}
-        ]
-    }
-]
+messages = [{"role": "user", "content": [{"text": question}]}]
 
 try:
     answer = llm.generate(messages=messages)

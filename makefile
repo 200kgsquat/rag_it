@@ -21,3 +21,6 @@ run_rag:
 
 run_llm:
 	uv run python -m scripts.run_llm "$(Q)"
+
+run_api:
+	uv run uvicorn src.qabot.api.main:app --host 0
