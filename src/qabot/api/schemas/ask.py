@@ -1,4 +1,4 @@
-from typing import List, Optional, Dict
+from typing import List, Optional
 from pydantic import BaseModel, Field
 
 
@@ -16,14 +16,14 @@ class Source(BaseModel):
 
 class Turn(BaseModel):
     role: str = Field(pattern="^(user|assistant)$")
-    content: List[Dict[str, str]]
+    content: str
 
 
 class AskRequest(BaseModel):
-    question: str = Field(min_length=3, max_length=512)
     session_id: Optional[str] = None
+    question: str = Field(min_length=3, max_length=512)
     history_summary: Optional[str] = None
-    last_role: Optional[List[Turn]] = Field(default_factory=list)
+    last_turns: List[Turn] = Field(default_factory=list)
 
 
 class AskResponse(BaseModel):
