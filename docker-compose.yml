@@ -1,0 +1,32 @@
+secrets:
+  aws_creds:
+    file: /home/one-two-seven/.aws/credentials
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: src/qabot/api/Dockerfile
+    container_name: rag_api
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./.index:/app/.index
+      - ./config.py:/app/config.py
+    environment:
+      - PYTHONUNBUFFERED=1
+    secrets:
+      - source: aws_creds
+
+  frontend:
+    build:
+      context: .
+      dockerfile: src/qabot/web/Dockerfile
+    container_name: rag_frontend
+    ports:
+      - "8501:8501"
+    depends_on:
+      - api
+    environment:
+      - API_URL=http://api:8000
+      - PYTHONUNBUFFERED=1

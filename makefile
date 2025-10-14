@@ -24,3 +24,12 @@ run_llm:
 
 run_api:
 	uv run uvicorn src.qabot.api.main:app --host 0
+
+run_frontend:
+	uv run streamlit run src/qabot/web/app.py
+
+docker_build:
+	sudo docker compose build
+
+docker_up:
+	sudo docker compose up

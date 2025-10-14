@@ -6,10 +6,22 @@ ask_responses = {
                 "example": {
                     "answer": "RAG stands for Retrieval-Augmented Generation...",
                     "sources": [
-                        {"title": "Doc 1", "path": "/docs/1", "updated_at": "2025-10-08T12:00:00Z"},
-                        {"title": "Doc 2", "path": "/docs/2", "updated_at": "2025-10-08T12:00:00Z"}
+                        {
+                            "title": "Doc 1",
+                            "path": "/docs/1",
+                            "updated_at": "2025-10-08T12:00:00Z",
+                        },
+                        {
+                            "title": "Doc 2",
+                            "path": "/docs/2",
+                            "updated_at": "2025-10-08T12:00:00Z",
+                        },
                     ],
-                    "timings": {"retrieve_ms": 10, "llm_ms": 100, "total_ms": 110}
+                    "timings": {
+                        "retrieve_ms": 10,
+                        "llm_ms": 100,
+                        "total_ms": 110,
+                    },
                 }
             }
         },

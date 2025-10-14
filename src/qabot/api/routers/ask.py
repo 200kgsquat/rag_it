@@ -1,22 +1,37 @@
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, Request, Depends
 import time
 from src.qabot.llm.prompts import SYSTEM_PROMPT
 from src.qabot.api.schemas import AskRequest, AskResponse
+from src.qabot.api.dependencies import get_llm, get_retriever
+from src.qabot.logger import get_logger
 
 ask = APIRouter()
+logger = get_logger(__name__)
 
 
 @ask.post("/ask", response_model=AskResponse)
-async def ask_question(ask_request: AskRequest, request: Request):
-    retriever = request.app.state.retriever
-    llm = request.app.state.llm
+async def ask_question(
+    ask_request: AskRequest,
+    request: Request,
+    llm=Depends(get_llm),
+    retriever=Depends(get_retriever),
+):
+    #Measure retrieval time
+    t0 = time.time()
     context_chunks = retriever.retrieve(ask_request.question, top_k=3)
+    t1 = time.time()
+
+    #Remove duplicate documents
+    seen_paths = set()
+    unique_chunks = []
+    for chunk in context_chunks:
+        path = chunk["meta"].get("path")
+        if path not in seen_paths:
+            seen_paths.add(path)
+            unique_chunks.append(chunk)
 
     context_texts = "\n\n".join(
-        [
-            f"- [Chunk {chunk['chunk_id']}] {chunk['text']}"
-            for chunk in context_chunks
-        ]
+        [f"- [Chunk {c['chunk_id']}] {c['text']}" for c in unique_chunks]
     )
 
     messages = [
@@ -24,20 +39,20 @@ async def ask_question(ask_request: AskRequest, request: Request):
             "role": "user",
             "content": [
                 {
-                    "text": f"Q: {ask_request.question}\n\nUse this context when anwsering:\n{context_texts}"
+                    "text": f"Q: {ask_request.question}\n\nUse this context when answering:\n{context_texts}"
                 }
             ],
         }
     ]
 
-    t0 = time.time()
+    t2 = time.time()
     answer = llm.generate(messages=messages, system=[{"text": SYSTEM_PROMPT}])
-    t1 = time.time()
+    t3 = time.time()
 
     timings = {
-        "retrieve_ms": 0,
-        "llm_ms": int((t1 - t0) * 1000),
-        "total_ms": int((t1 - t0) * 1000),
+        "retrieve_ms": int((t1 - t0) * 1000),
+        "llm_ms": int((t3 - t2) * 1000),
+        "total_ms": int((t3 - t0) * 1000),
     }
 
     sources = [
@@ -46,7 +61,7 @@ async def ask_question(ask_request: AskRequest, request: Request):
             "path": chunk["meta"].get("path", ""),
             "updated_at": chunk["meta"].get("updated_at", ""),
         }
-        for chunk in context_chunks
+        for chunk in unique_chunks
     ]
 
     return AskResponse(answer=answer, sources=sources, timings=timings)
