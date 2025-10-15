@@ -4,24 +4,32 @@ ask_responses = {
         "content": {
             "application/json": {
                 "example": {
-                    "answer": "RAG stands for Retrieval-Augmented Generation...",
-                    "sources": [
+                    "id": "chatcmpl-f51b2cd2-bef7-417e-964e-a08f0b513c22",
+                    "object": "chat.completion",
+                    "created": 1730241104,
+                    "model": "openai/gpt-oss-20b",
+                    "choices": [
                         {
-                            "title": "Doc 1",
-                            "path": "/docs/1",
-                            "updated_at": "2025-10-08T12:00:00Z",
-                        },
-                        {
-                            "title": "Doc 2",
-                            "path": "/docs/2",
-                            "updated_at": "2025-10-08T12:00:00Z",
-                        },
+                            "index": 0,
+                            "message": {
+                                "role": "assistant",
+                                "content": "Fast language models have gained significant attention..."
+                            },
+                            "logprobs": None,
+                            "finish_reason": "stop"
+                        }
                     ],
-                    "timings": {
-                        "retrieve_ms": 10,
-                        "llm_ms": 100,
-                        "total_ms": 110,
+                    "usage": {
+                        "queue_time": 0.037493756,
+                        "prompt_tokens": 18,
+                        "prompt_time": 0.000680594,
+                        "completion_tokens": 556,
+                        "completion_time": 0.463333333,
+                        "total_tokens": 574,
+                        "total_time": 0.464013927
                     },
+                    "system_fingerprint": "fp_179b0f92c9",
+                    "x_groq": { "id": "req_01jbd6g2qdfw2adyrt2az8hz4w" }
                 }
             }
         },

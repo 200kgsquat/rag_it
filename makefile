@@ -23,7 +23,7 @@ run_llm:
 	uv run python -m scripts.run_llm "$(Q)"
 
 run_api:
-	uv run uvicorn src.qabot.api.main:app --host 0
+	export $(shell grep -v '^#' .env | xargs) && uv run uvicorn src.qabot.api.main:app --host 0
 
 run_frontend:
 	uv run streamlit run src/qabot/web/app.py

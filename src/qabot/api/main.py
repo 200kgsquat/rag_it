@@ -1,9 +1,9 @@
-
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from src.qabot.api.routers.health import health
 from src.qabot.api.routers.ask import ask
-from src.qabot.llm.gateway import LLM
+from src.qabot.api.routers.summarize import summarize
+from src.qabot.llm.gateway import GroqClient
 from src.qabot.search.retriever import Retriever
 import faiss
 import json
@@ -22,10 +22,7 @@ async def lifespan(app: FastAPI):
     with config.chunks_file.open("r", encoding="utf-8") as f:
         chunks = json.load(f)
     retriever = Retriever(config.embedding_model, index, chunks)
-    llm = LLM(
-        model_id=config.llm.model_id,
-        region=config.llm.region,
-    )
+    llm = GroqClient(model=config.llm.model)
     app.state.retriever = retriever
     app.state.llm = llm
     logger.info("✅ Resources initialized")
@@ -38,3 +35,4 @@ app = FastAPI(lifespan=lifespan)
 
 app.include_router(health)
 app.include_router(ask)
+app.include_router(summarize)

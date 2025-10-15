@@ -4,9 +4,8 @@ from pathlib import Path
 
 @dataclass
 class LLMConfig:
-    model: str = "anthropic.claude-v2"
-    model_id: str = "arn:aws:bedrock:eu-north-1:437815003412:inference-profile/eu.anthropic.claude-3-7-sonnet-20250219-v1:0"
-    region: str = "eu-north-1"
+    base_url: str = "https://api.groq.com/openai/v1"
+    model: str = "moonshotai/kimi-k2-instruct-0905"
     temperature: float = 0.2
     max_tokens: int = 512
 

@@ -2,26 +2,23 @@ from fastapi import APIRouter, Request, Depends
 import time
 from src.qabot.llm.prompts import SYSTEM_PROMPT
 from src.qabot.api.schemas import AskRequest, AskResponse
-from src.qabot.api.dependencies import get_llm, get_retriever
-from src.qabot.logger import get_logger
+from src.qabot.api.dependencies.client import get_llm, get_retriever
 
 ask = APIRouter()
-logger = get_logger(__name__)
 
 
 @ask.post("/ask", response_model=AskResponse)
 async def ask_question(
     ask_request: AskRequest,
-    request: Request,
     llm=Depends(get_llm),
     retriever=Depends(get_retriever),
 ):
-    #Measure retrieval time
+    # Measure retrieval time
     t0 = time.time()
     context_chunks = retriever.retrieve(ask_request.question, top_k=3)
     t1 = time.time()
 
-    #Remove duplicate documents
+    # Remove duplicate documents
     seen_paths = set()
     unique_chunks = []
     for chunk in context_chunks:
@@ -34,19 +31,14 @@ async def ask_question(
         [f"- [Chunk {c['chunk_id']}] {c['text']}" for c in unique_chunks]
     )
 
+
     messages = [
-        {
-            "role": "user",
-            "content": [
-                {
-                    "text": f"Q: {ask_request.question}\n\nUse this context when answering:\n{context_texts}"
-                }
-            ],
-        }
+        {"role": "system", "content": SYSTEM_PROMPT},
+        {"role": "user", "content": f"Q: {ask_request.question}\n\nUse this context when answering:\n{context_texts}"}
     ]
 
     t2 = time.time()
-    answer = llm.generate(messages=messages, system=[{"text": SYSTEM_PROMPT}])
+    answer = llm.generate(messages=messages)
     t3 = time.time()
 
     timings = {
