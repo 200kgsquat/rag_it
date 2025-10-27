@@ -1,8 +1,11 @@
 from fastapi import APIRouter, Request, Depends
 import time
+import uuid
+from datetime import datetime, timezone
 from src.qabot.llm.prompts import SYSTEM_PROMPT
 from src.qabot.api.schemas import AskRequest, AskResponse
-from src.qabot.api.dependencies.client import get_llm, get_retriever
+from src.qabot.api.dependencies.client import get_llm, get_retriever, get_log_repository
+from src.qabot.repository.models import LogRecord
 
 ask = APIRouter()
 
@@ -12,13 +15,16 @@ async def ask_question(
     ask_request: AskRequest,
     llm=Depends(get_llm),
     retriever=Depends(get_retriever),
+    log_repository=Depends(get_log_repository),
 ):
-    # Measure retrieval time
+
+    session_id = ask_request.session_id or str(uuid.uuid4())
+
     t0 = time.time()
     context_chunks = retriever.retrieve(ask_request.question, top_k=3)
     t1 = time.time()
 
-    # Remove duplicate documents
+
     seen_paths = set()
     unique_chunks = []
     for chunk in context_chunks:
@@ -55,5 +61,20 @@ async def ask_question(
         }
         for chunk in unique_chunks
     ]
+
+    top_doc_paths = [source["path"] for source in sources]
+    answer_length = len(answer.split())
+    log_record = LogRecord(
+        timestamp=datetime.now(timezone.utc),
+        session_id=session_id,
+        question=ask_request.question,
+        answer=answer,
+        top_doc_paths=top_doc_paths,
+        answer_length=answer_length,
+        retrieve_ms=timings["retrieve_ms"],
+        llm_ms=timings["llm_ms"],
+        total_ms=timings["total_ms"],
+    )
+    log_repository.create(log_record)
 
     return AskResponse(answer=answer, sources=sources, timings=timings)

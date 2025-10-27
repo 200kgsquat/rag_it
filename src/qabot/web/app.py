@@ -66,21 +66,21 @@ def clean_response_content(content):
     if not content:
         return "No response received"
     
-    # Remove excessive repetitions and malformed text
+                                                     
     lines = content.split('\n')
     cleaned_lines = []
     
     for line in lines:
-        # Skip lines with excessive repetitions
+                                               
         if line.count('*') > 10 or line.count('Reply') > 5:
             continue
-        # Skip empty lines and malformed chunks
+                                               
         if line.strip() and not line.startswith('[') and not line.endswith(']'):
             cleaned_lines.append(line.strip())
     
     cleaned_content = '\n'.join(cleaned_lines)
     
-    # If content is still problematic, provide a fallback
+                                                         
     if len(cleaned_content) < 10 or 'Reply * Reply *' in cleaned_content:
         return "I apologize, but I'm having trouble generating a proper response. Please try rephrasing your question."
     
@@ -92,18 +92,18 @@ def format_sources(sources):
         return []
     
     formatted_sources = []
-    for source in sources[:3]:  # Limit to 2-3 sources
-        # Extract title with fallback
+    for source in sources[:3]:                        
+                                     
         title = source.get('title', '')
         if not title:
-            # Try to extract from path or use filename
+                                                      
             path = source.get('path', '')
             if path:
                 title = path.split('/')[-1] if '/' in path else path
             else:
                 title = 'Unknown document'
         
-        # Extract update date with fallback
+                                           
         updated = source.get('updated_at', source.get('updated', ''))
         if not updated:
             updated = 'Date not available'
@@ -119,13 +119,13 @@ def display_chat():
     """Display chat messages with optional sources"""
     for msg in st.session_state.chat_history:
         with st.chat_message(msg["role"]):
-            # Display message content
+                                     
             content = msg["content"]
             if msg["role"] == "assistant":
                 content = clean_response_content(content)
             st.markdown(content)
             
-            # Show sources for assistant messages when toggle is enabled
+                                                                        
             if (st.session_state.show_sources and 
                 msg["role"] == "assistant" and 
                 "sources" in msg):
@@ -139,14 +139,14 @@ def display_chat():
 def handle_chat():
     """Handle user input and get response from RAG model"""
     if user_input := st.chat_input("Enter your message..."):
-        # Prevent multiple simultaneous requests
+                                                
         if st.session_state.processing:
             st.warning("Please wait for the current response to complete.")
             return
             
         st.session_state.processing = True
         
-        # Add user message to chat history
+                                          
         user_message = {
             "role": "user", 
             "content": user_input,
@@ -155,7 +155,7 @@ def handle_chat():
         st.session_state.chat_history.append(user_message)
         st.session_state.message_count += 1
         
-        # Prepare payload according to requirements
+                                                   
         payload = {
             "session_id": st.session_state.session_id,
             "history_summary": st.session_state.history_summary,
@@ -163,7 +163,7 @@ def handle_chat():
             "question": user_input
         }
         
-        # Use a placeholder for assistant response
+                                                  
         assistant_placeholder = st.empty()
         
         try:
@@ -177,11 +177,11 @@ def handle_chat():
             if response.status_code == 200:
                 data = response.json()
                 
-                # Clean the response content
+                                            
                 answer_content = clean_response_content(data.get("answer", ""))
                 sources = format_sources(data.get("sources", []))
                 
-                # Add assistant response to chat history
+                                                        
                 assistant_message = {
                     "role": "assistant",
                     "content": answer_content,
@@ -191,7 +191,7 @@ def handle_chat():
                 st.session_state.chat_history.append(assistant_message)
                 st.session_state.message_count += 1
                 
-                # Update conversation summary periodically
+                                                          
                 update_conversation_summary()
                 
             else:
@@ -243,10 +243,10 @@ def main():
     st.title("💬 QA Chat Interface")
     st.caption("Chat with your RAG model - Context preserved across 10-15 messages")
     
-    # Initialize session state
+                              
     init_session()
     
-    # Control panel
+                   
     col1, col2, col3 = st.columns([1, 1, 2])
     
     with col1:
@@ -266,18 +266,18 @@ def main():
         else:
             st.caption("**Conversation Summary:** No summary yet")
     
-    # Display chat messages
+                           
     display_chat()
     
-    # Show processing indicator
+                               
     if st.session_state.processing:
         with st.chat_message("assistant"):
             st.markdown("Thinking...")
     
-    # Handle user input
+                       
     handle_chat()
     
-    # Debug information (can be removed in production)
+                                                      
     with st.expander("Debug Information", expanded=False):
         st.write(f"Session ID: {st.session_state.session_id}")
         st.write(f"Message count: {st.session_state.message_count}")

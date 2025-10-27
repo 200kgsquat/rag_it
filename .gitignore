@@ -16,3 +16,11 @@ data/
 .index/
 
 .env
+
+evals/questions.csv
+
+evals/results
+
+evals/analyze_results_llm.py
+
+logs/logs.db

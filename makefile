@@ -33,3 +33,12 @@ docker_build:
 
 docker_up:
 	sudo docker compose up
+
+run_eval:
+	uv run python -m evals.run_eval
+
+test_eval:
+	uv run pytest -v tests/test_eval.py
+
+run_logs:
+	uv run python -m scripts.fetch_logs $(ARGS)

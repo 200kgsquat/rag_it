@@ -3,8 +3,10 @@ from fastapi import FastAPI
 from src.qabot.api.routers.health import health
 from src.qabot.api.routers.ask import ask
 from src.qabot.api.routers.summarize import summarize
+from src.qabot.indexer import Indexer
 from src.qabot.llm.gateway import GroqClient
 from src.qabot.search.retriever import Retriever
+from src.qabot.repository.log_repository import LogRepository
 import faiss
 import json
 from config import config
@@ -16,15 +18,16 @@ logging.basicConfig(level=logging.INFO)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    logger.info("Loading FAISS index...")
-    index = faiss.read_index(str(config.index_file))
-    logger.info("Loading chunks...")
-    with config.chunks_file.open("r", encoding="utf-8") as f:
-        chunks = json.load(f)
-    retriever = Retriever(config.embedding_model, index, chunks)
+    config.ensure_dirs()
+    logger.info("Loading indices...")
+    indexer = Indexer(model_name=config.embedding_model)
+    index_faiss, index_bm25, chunks = indexer.load()
+    retriever = Retriever(config.embedding_model, index_faiss, chunks, index_bm25)
     llm = GroqClient(model=config.llm.model)
+    log_repository = LogRepository()
     app.state.retriever = retriever
     app.state.llm = llm
+    app.state.log_repository = log_repository
     logger.info("✅ Resources initialized")
     yield
     logger.info("🛑 Resources cleaned up")

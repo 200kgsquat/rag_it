@@ -27,7 +27,7 @@ class GroqClient(LLM):
         temperature: float = 0.2,
         max_tokens: int = 512,
     ) -> str:
-    # Message validation and formatting
+                                       
         formatted_messages = []
         for msg in messages:
             if "role" not in msg or "content" not in msg:
@@ -36,9 +36,9 @@ class GroqClient(LLM):
             role = msg["role"]
             content = msg["content"]
             
-            # Content processing
+                                
             if isinstance(content, list):
-                # If content is a list, extract text parts
+                                                          
                 content_parts = []
                 for item in content:
                     if isinstance(item, dict) and "text" in item:
@@ -49,7 +49,7 @@ class GroqClient(LLM):
             elif not isinstance(content, str):
                 content = str(content)
             
-            # Ensure content is not empty
+                                         
             if not content.strip():
                 continue
                 
@@ -58,7 +58,7 @@ class GroqClient(LLM):
                 "content": content.strip()
             })
 
-    # Check that there are messages to send
+                                           
         if not formatted_messages:
             raise ValueError("No valid messages to send")
 
@@ -70,15 +70,15 @@ class GroqClient(LLM):
         payload = {
             "model": self.model,
             "messages": formatted_messages,
-            "temperature": max(0.0, min(temperature, 2.0)),  # Ограничение диапазона
-            "max_tokens": max(1, min(max_tokens, 4096)),  # Ограничение токенов
-            "stream": False,  # Явно указываем не stream режим
+            "temperature": max(0.0, min(temperature, 2.0)),                         
+            "max_tokens": max(1, min(max_tokens, 4096)),                       
+            "stream": False,                                  
         }
 
         try:
             resp = requests.post(url, headers=headers, json=payload, timeout=self.timeout)
             
-            # Детальная обработка ошибок
+                                        
             if resp.status_code != 200:
                 error_detail = f"Status: {resp.status_code}"
                 try:

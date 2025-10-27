@@ -1,5 +1,6 @@
 import json
 from src.qabot.indexer import Indexer
+from src.qabot.search.retriever import Retriever
 from config import config
 
 
@@ -15,11 +16,28 @@ def main():
     indexer = Indexer(model_name=config.embedding_model)
     indexer.build_index(chunks)
 
+    # Load indices and test both retrieval methods
+    index_faiss, index_bm25, chunks_loaded = indexer.load()
+    retriever = Retriever(config.embedding_model, index_faiss, chunks_loaded, index_bm25)
+
     query = "How to reset VPN password?"
     print(f"\nQuery: {query}")
-    results = indexer.query(query, k=3)
 
-    for i, res in enumerate(results, start=1):
+    # Test semantic retrieval
+    print("\n--- FAISS (Semantic) Results ---")
+    faiss_results = retriever.retrieve(query, top_k=3)
+    for i, res in enumerate(faiss_results, start=1):
+        print(
+            f"{i}. Score: {res['score']:.4f}, "
+            f"Text: {res['text'][:150]}..., "
+            f"Meta: {res['meta']}, "
+            f"Chunk ID: {res['chunk_id']}"
+        )
+
+    # Test BM25 retrieval
+    print(f"\n--- BM25 (Keyword) Results ---")
+    bm25_results = retriever.bm25_retrieve(query, top_k=3)
+    for i, res in enumerate(bm25_results, start=1):
         print(
             f"{i}. Score: {res['score']:.4f}, "
             f"Text: {res['text'][:150]}..., "
