@@ -37,19 +37,9 @@ class Chunker:
         return [c for c in chunks if c]
 
     def _split_by_headings(self, text: str) -> List[Tuple[str, str]]:
-        pattern = r"(#{1,3})\s+(.*)"
-        matches = list(re.finditer(pattern, text))
-        if not matches:
-            return [("", text)]
-
-        sections = []
-        for i, match in enumerate(matches):
-            start = match.end()
-            end = matches[i + 1].start() if i + 1 < len(matches) else len(text)
-            heading = match.group(2).strip()
-            content = text[start:end].strip()
-            sections.append((heading, content))
-        return sections
+                                                             
+                                                  
+        return [("", text)]
 
     def _split_by_tokens(
         self,

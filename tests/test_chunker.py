@@ -10,10 +10,8 @@ def sample_document():
         "text": """# Section 1
 This is the first section. It has some text to tokenize.
 
-## Subsection 1.1
 More text in subsection one.
 
-# Section 2
 This is the second section, with additional content to test chunking.
 """,
     }

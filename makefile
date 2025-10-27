@@ -21,3 +21,24 @@ run_rag:
 
 run_llm:
 	uv run python -m scripts.run_llm "$(Q)"
+
+run_api:
+	export $(shell grep -v '^#' .env | xargs) && uv run uvicorn src.qabot.api.main:app --host 0
+
+run_frontend:
+	uv run streamlit run src/qabot/web/app.py
+
+docker_build:
+	sudo docker compose build
+
+docker_up:
+	sudo docker compose up
+
+run_eval:
+	uv run python -m evals.run_eval
+
+test_eval:
+	uv run pytest -v tests/test_eval.py
+
+run_logs:
+	uv run python -m scripts.fetch_logs $(ARGS)

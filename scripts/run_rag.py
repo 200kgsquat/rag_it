@@ -1,9 +1,9 @@
 import json
 import faiss
 from typing import List, Dict
-from src.qabot.llm.getway import LLM
+from src.qabot.llm.gateway import LLM
 from src.qabot.llm.prompts import SYSTEM_PROMPT
-from src.qabot.search.retriver import Retriever
+from src.qabot.search.retriever import Retriever
 from config import config
 
 

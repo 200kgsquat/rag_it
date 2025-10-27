@@ -1,0 +1,29 @@
+services:
+  api:
+    build:
+      context: .
+      dockerfile: src/qabot/api/Dockerfile
+    container_name: rag_api
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./.index:/app/.index
+      - ./logs:/app/logs
+      - ./config.py:/app/config.py
+    environment:
+      - GROQ_API_KEY=${GROQ_API_KEY}
+      - PYTHONUNBUFFERED=1
+
+  frontend:
+    build:
+      context: .
+      dockerfile: src/qabot/web/Dockerfile
+    container_name: rag_frontend
+    ports:
+      - "8501:8501"
+    depends_on:
+      - api
+    environment:
+      - PYTHONPATH=/app
+      - API_URL=http://api:8000
+      - PYTHONUNBUFFERED=1
